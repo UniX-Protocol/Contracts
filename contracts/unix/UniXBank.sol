@@ -278,8 +278,35 @@ contract UniXBank {
 		}
 	}
 
-	function _claimedInterest(address token,address user) internal {
+	function _getPrincipalAndInterest(address token) internal view returns(uint principalAndInterest){
+		principalAndInterest = IERC20(pools[token].aToken).balanceOf(address(this));
+	}
 
+	function _getInterest(address token) internal view returns(uint interest){
+		uint principalAndInterest = _getPrincipalAndInterest(token);
+		// console.log("principalAndInterest: %o  reserves: %o",principalAndInterest, reserves[token]);
+		interest = principalAndInterest - reserves[token];
+	}
+
+	function getInterest(address token) external view  returns(uint interest){
+		interest = _getInterest(token);
+	}
+
+	function _claimedInterest(address token,address user) internal {
+		uint interest = _getInterest(token);
+		_updateShare(user, token, 0);
+		PoolInfo storage poolInfo = pools[token];
+		uint totalInterest = poolInfo.accInterest + interest;
+		uint claimedInterest = poolInfo.userInfo[user].share * totalInterest / poolInfo.share - poolInfo.userInfo[user].accInterest;
+		if(claimedInterest > 0){
+			_aaveV3Withdraw(token, claimedInterest);
+			TransferHelper.safeTransfer(token, user, claimedInterest);
+			poolInfo.userInfo[user].accInterest += claimedInterest;
+		}
+	}
+
+	function claimInterest(address token) external {
+		_claimedInterest(token,msg.sender);
 	}
 
 }
