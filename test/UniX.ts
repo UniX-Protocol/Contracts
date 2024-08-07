@@ -6,7 +6,8 @@ const contractAddress = {
 	USDC:"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
 	WBTC:"0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
 	RewardController:"0x8164Cc65827dcFe994AB23944CBC90e0aa80bFcb",
-	AaveV3Pool:"0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2"
+	AaveV3Pool:"0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
+	AaveEthGateway:"0x893411580e590D62dDBca8a703d61Cc4A8c7b2b9"
 }
 
 describe("Unix test",()=>{
@@ -21,11 +22,11 @@ describe("Unix test",()=>{
 		const ethBalance = await hethers.provider.getBalance(owner.address)
 
 		const UniXBank = await hethers.getContractFactory("UniXBank")
-		const aaveV3Pool = "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2"
-		const aaveEthGateway = "0x893411580e590D62dDBca8a703d61Cc4A8c7b2b9"
-		const aaveRewardController = "0x8164Cc65827dcFe994AB23944CBC90e0aa80bFcb"
+		// const aaveV3Pool = "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2"
+		// const aaveEthGateway = "0x893411580e590D62dDBca8a703d61Cc4A8c7b2b9"
+		// const aaveRewardController = "0x8164Cc65827dcFe994AB23944CBC90e0aa80bFcb"
 
-		const unixBank = await UniXBank.deploy(aaveV3Pool,weth.getAddress(),aaveEthGateway,aaveRewardController,[weth.getAddress(),contractAddress.USDC,contractAddress.WBTC])
+		const unixBank = await UniXBank.deploy(contractAddress.AaveV3Pool,weth.getAddress(),contractAddress.AaveEthGateway,contractAddress.RewardController,[weth.getAddress(),contractAddress.USDC,contractAddress.WBTC])
 		await unixBank.waitForDeployment()
 
 		const UniswapV2Factory = await hethers.getContractFactory("UniswapV2Factory")
@@ -128,70 +129,70 @@ describe("Unix test",()=>{
 		}
 	}
 
-	// describe("addLiquidity",()=>{
-	// 	it("add liquidity and supply to aave v3", async ()=>{
-	// 		await loadFixture(addLiquidityFixture)
+	describe("addLiquidity",()=>{
+		it("add liquidity and supply to aave v3", async ()=>{
+			await loadFixture(addLiquidityFixture)
 			
-	// 	})
-	// 	it("swapExactTokensForTokens", async ()=>{
-	// 		const {uniswapV2Router,owner,unixBank} = await loadFixture(addLiquidityFixture)
-	// 		const amountIn = numberString("100e6")
-	// 		const amountOutMin = 0
-	// 		const path = [contractAddress.USDC,contractAddress.WBTC]
-	// 		const to = owner.address
-	// 		const usdc = await hethers.getContractAt("AllocateErc20",contractAddress.USDC)
-	// 		await usdc.approve(unixBank.getAddress(),amountIn)
-	// 		const tx = await uniswapV2Router.swapExactTokensForTokens(amountIn,amountOutMin,path,to,deadline(),{gasLimit:numberString("1000000")})
-	// 		await tx.wait()
-	// 	})
-	// })
+		})
+		it("swapExactTokensForTokens", async ()=>{
+			const {uniswapV2Router,owner,unixBank} = await loadFixture(addLiquidityFixture)
+			const amountIn = numberString("100e6")
+			const amountOutMin = 0
+			const path = [contractAddress.USDC,contractAddress.WBTC]
+			const to = owner.address
+			const usdc = await hethers.getContractAt("AllocateErc20",contractAddress.USDC)
+			await usdc.approve(unixBank.getAddress(),amountIn)
+			const tx = await uniswapV2Router.swapExactTokensForTokens(amountIn,amountOutMin,path,to,deadline(),{gasLimit:numberString("1000000")})
+			await tx.wait()
+		})
+	})
 
-	// describe("addLiquidityETH",()=>{
-	// 	it("add liquidity eth",async ()=>{
-	// 		await loadFixture(addLiquidityETHFixture)
-	// 	})
+	describe("addLiquidityETH",()=>{
+		it("add liquidity eth",async ()=>{
+			await loadFixture(addLiquidityETHFixture)
+		})
 
-	// 	it("swapExactTokensForETH",async ()=> {
-	// 		const {uniswapV2Router,unixBank,token,decimals,owner,weth} = await loadFixture(addLiquidityETHFixture)
-	// 		const amountIn = numberString(`100e${decimals}`)
-	// 		await token.approve(unixBank.getAddress(),amountIn)
-	// 		const amountOutMin = 0
-	// 		const path = [contractAddress.USDC,weth.getAddress()]
-	// 		const to = owner.address
-	// 		const tx = await uniswapV2Router.swapExactTokensForETH(amountIn,amountOutMin,path,to,deadline())
-	// 		await tx.wait()
-	// 	})
+		it("swapExactTokensForETH",async ()=> {
+			const {uniswapV2Router,unixBank,token,decimals,owner,weth} = await loadFixture(addLiquidityETHFixture)
+			const amountIn = numberString(`100e${decimals}`)
+			await token.approve(unixBank.getAddress(),amountIn)
+			const amountOutMin = 0
+			const path = [contractAddress.USDC,weth.getAddress()]
+			const to = owner.address
+			const tx = await uniswapV2Router.swapExactTokensForETH(amountIn,amountOutMin,path,to,deadline())
+			await tx.wait()
+		})
 
-	// 	it("swapExactTokensForETHSupportingFeeOnTransferTokens",async ()=>{
-	// 		const {uniswapV2Router,unixBank,token,decimals,owner,weth} = await loadFixture(addLiquidityETHFixture)
-	// 		const amountIn = numberString(`100e${decimals}`)
-	// 		// await token.approve(uniswapV2Router.getAddress(),amountIn)
-	// 		await token.approve(unixBank.getAddress(),amountIn)
-	// 		const amountOutMin = 0
-	// 		const path = [contractAddress.USDC,weth.getAddress()]
-	// 		const to = owner.address
-	// 		const tx = await uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(amountIn,amountOutMin,path,to,deadline())
-	// 		await tx.wait()
-	// 	})
+		it("swapExactTokensForETHSupportingFeeOnTransferTokens",async ()=>{
+			const {uniswapV2Router,unixBank,token,decimals,owner,weth} = await loadFixture(addLiquidityETHFixture)
+			const amountIn = numberString(`100e${decimals}`)
+			// await token.approve(uniswapV2Router.getAddress(),amountIn)
+			await token.approve(unixBank.getAddress(),amountIn)
+			const amountOutMin = 0
+			const path = [contractAddress.USDC,weth.getAddress()]
+			const to = owner.address
+			const tx = await uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(amountIn,amountOutMin,path,to,deadline())
+			await tx.wait()
+		})
 
-	// 	it("swapExactETHForTokens",async ()=>{
-	// 		const {uniswapV2Router,unixBank,token,decimals,owner,weth} = await loadFixture(addLiquidityETHFixture)
-	// 		const amountOutMin = 0
-	// 		const path = [weth.getAddress(),contractAddress.USDC]
-	// 		const to  = owner.address
-	// 		const tx = await uniswapV2Router.swapExactETHForTokens(amountOutMin,path,to,deadline(),{value:numberString("1e18")})
-	// 		await tx.wait()
-	// 	})
+		it("swapExactETHForTokens",async ()=>{
+			const {uniswapV2Router,unixBank,token,decimals,owner,weth} = await loadFixture(addLiquidityETHFixture)
+			const amountOutMin = 0
+			const path = [weth.getAddress(),contractAddress.USDC]
+			const to  = owner.address
+			const tx = await uniswapV2Router.swapExactETHForTokens(amountOutMin,path,to,deadline(),{value:numberString("1e18")})
+			await tx.wait()
+		})
 
-	// 	it("swapExactETHForTokensSupportingFeeOnTransferTokens",async ()=>{
-	// 		const {uniswapV2Router,unixBank,token,decimals,owner,weth} = await loadFixture(addLiquidityETHFixture)
-	// 		const amountOutMin = 0
-	// 		const path = [weth.getAddress(),contractAddress.USDC]
-	// 		const to  = owner.address
-	// 		const tx = await uniswapV2Router.swapExactETHForTokensSupportingFeeOnTransferTokens(amountOutMin,path,to,deadline(),{value:numberString("1e18")})
-	// 		await tx.wait()
-	// 	})
-	// })
+		it("swapExactETHForTokensSupportingFeeOnTransferTokens",async ()=>{
+			const {uniswapV2Router,unixBank,token,decimals,owner,weth} = await loadFixture(addLiquidityETHFixture)
+			const amountOutMin = 0
+			const path = [weth.getAddress(),contractAddress.USDC]
+			const to  = owner.address
+			const tx = await uniswapV2Router.swapExactETHForTokensSupportingFeeOnTransferTokens(amountOutMin,path,to,deadline(),{value:numberString("1e18")})
+			await tx.wait()
+		})
+	})
 
 	describe("removeLiquidity",()=>{
 		it("remove liquidity and withdraw from aave v3",async ()=>{
@@ -236,7 +237,7 @@ describe("Unix test",()=>{
 		it("getUserAvailableRewards",async ()=>{
 			const {uniswapV2Router,owner,uniswapFactory,unixBank,uniXHelper} = await loadFixture(addLiquidityFixture)
 			await time.increase(86400)
-			const res = await uniXHelper.getUserRewards.staticCall(owner,contractAddress.USDC,contractAddress.RewardController,contractAddress.AaveV3Pool,unixBank)
+			const res = await uniXHelper.getUserRewards.staticCall(owner,contractAddress.WBTC,contractAddress.RewardController,contractAddress.AaveV3Pool,unixBank)
 
 			console.log("res",res)
 			
