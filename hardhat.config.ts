@@ -1,5 +1,10 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "hardhat-contract-sizer";
+import dotenv from "dotenv";
+dotenv.config()
+
+const PK = process.env.PK as string
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -153,6 +158,23 @@ const config: HardhatUserConfig = {
       }
     }
   },
+  contractSizer:{
+    alphaSort: true,
+    runOnCompile: true,
+    disambiguatePaths: false
+  },
+  networks: {
+    mainnet_f:{
+      url:"https://virtual.mainnet.rpc.tenderly.co/fb2dcf47-c2cd-4368-8a8c-e1ed155f5c34",
+      chainId:202407311228,
+      accounts:[PK]
+    },
+    hardhat:{
+      forking:{
+        url:"https://virtual.mainnet.rpc.tenderly.co/fb2dcf47-c2cd-4368-8a8c-e1ed155f5c34",
+      }
+    }
+  }
 };
 
 export default config;

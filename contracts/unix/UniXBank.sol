@@ -9,6 +9,7 @@ import './interface/IWrappedTokenGatewayV3.sol';
 import './interface/IWETH.sol';
 import './interface/IAaveV3RewardController.sol';
 import './library/WadRayMath.sol';
+import 'hardhat/console.sol';
 
 contract UniXBank {
 	using WadRayMath for uint;
@@ -98,6 +99,7 @@ contract UniXBank {
 	function _onBurn(address user,address pair, address token,uint amount, uint reserve) internal {
 		if(supportEarnTokens[token]){
 			_claimReward(user, token);
+			console.log("======_onBurn======  %o  %o",amount, reserve);
 			_claimedInterest(token, user);
 			PoolInfo storage poolInfo = pools[token];
 			uint removedShare = amount * poolInfo.userInfo[user].share / reserve;
@@ -116,7 +118,13 @@ contract UniXBank {
 			}
 
 			uint changedAccUserInterest = poolInfo.userInfo[user].accInterest * amount / reserve;
+			console.log("poolInfo.userInfo[user].accInterest: %o",poolInfo.userInfo[user].accInterest);
 			poolInfo.userInfo[user].accInterest -= changedAccUserInterest;
+			console.log("poolInfo.userInfo[user].accInterest: %o",poolInfo.userInfo[user].accInterest);
+			console.log("amount: %o",amount);
+			console.log("reserve: %o",reserve);
+			console.log("changedAccUserInterest: %o",changedAccUserInterest);
+			console.log("poolInfo.accInterest: %o",poolInfo.accInterest);
 			poolInfo.accInterest -= changedAccUserInterest;
 
 		}
@@ -137,7 +145,8 @@ contract UniXBank {
 	function _onTransfer(address token,address from, address to, uint amount, uint reserve) internal {
 		if(supportEarnTokens[token]){
 			_claimReward(from, token);
-			_claimReward(to, token);  //todo
+			// _claimReward(to, token);  //todo
+			console.log("======_onTransfer======");
 			_claimedInterest(token,from);
 			PoolInfo storage poolInfo = pools[token];
 			uint changeShare = amount * poolInfo.userInfo[from].share / reserve;
@@ -174,7 +183,8 @@ contract UniXBank {
 	function _safeTransferTo(address pair,address token, address to, uint value) internal{
 		uint balance = IERC20(token).balanceOf(address(this));
 		if(value > balance){
-			_aaveV3Withdraw(token, value - balance);
+			console.log("=====_safeTransferTo=====");
+			_aaveV3Withdraw(token, value - balance,false);
 		}
 		(bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
         require(success && (data.length == 0 || abi.decode(data, (bool))), 'UniswapV2: TRANSFER_FAILED');
@@ -254,12 +264,13 @@ contract UniXBank {
 				IERC20(token).approve(aaveV3Pool, amount);
 				IAaveV3Pool(aaveV3Pool).supply(token, amount, address(this), 0);
 			}
+			console.log("_aaveV3Supply: %o",amount);
 			reserves[token] += amount;
 		}
 	}
 
 
-	function _aaveV3Withdraw(address token, uint amount) internal {
+	function _aaveV3Withdraw(address token, uint amount,bool isClaimInterest) internal {
 		if(supportEarnTokens[token]){
 			if(token == wETH) {
 				IWrappedTokenGatewayV3 tokenGateway = IWrappedTokenGatewayV3(ethGateway);
@@ -274,7 +285,10 @@ contract UniXBank {
 				IERC20(aToken).approve(aaveV3Pool, amount);
 				IAaveV3Pool(aaveV3Pool).withdraw(token, amount, address(this));
 			}
-			reserves[token] -= amount;
+			console.log("reserves[token]: %o amount: %o",reserves[token],amount);
+			if(!isClaimInterest){
+				reserves[token] -= amount;
+			}
 		}
 	}
 
@@ -284,7 +298,7 @@ contract UniXBank {
 
 	function _getInterest(address token) internal view returns(uint interest){
 		uint principalAndInterest = _getPrincipalAndInterest(token);
-		// console.log("principalAndInterest: %o  reserves: %o",principalAndInterest, reserves[token]);
+		console.log("principalAndInterest: %o  reserves: %o",principalAndInterest, reserves[token]);
 		interest = principalAndInterest - reserves[token];
 	}
 
@@ -297,11 +311,20 @@ contract UniXBank {
 		_updateShare(user, token, 0);
 		PoolInfo storage poolInfo = pools[token];
 		uint totalInterest = poolInfo.accInterest + interest;
+		console.log("poolInfo.accInterest: %o",poolInfo.accInterest);
+		console.log("interest: %o",interest);
+		console.log("poolInfo.userInfo[user].share: %o",poolInfo.userInfo[user].share);
+		console.log("totalInterest: %o",totalInterest);
+		console.log("poolInfo.share : %o",poolInfo.share );
+		console.log("poolInfo.userInfo[user].accInterest: %o",poolInfo.userInfo[user].accInterest);
+		console.log("=================================================================================");
 		uint claimedInterest = poolInfo.userInfo[user].share * totalInterest / poolInfo.share - poolInfo.userInfo[user].accInterest;
 		if(claimedInterest > 0){
-			_aaveV3Withdraw(token, claimedInterest);
+			console.log("=====_claimedInterest=====");
+			_aaveV3Withdraw(token, claimedInterest,true);
 			TransferHelper.safeTransfer(token, user, claimedInterest);
 			poolInfo.userInfo[user].accInterest += claimedInterest;
+			poolInfo.accInterest += claimedInterest;
 		}
 	}
 
