@@ -155,6 +155,15 @@ const config: HardhatUserConfig = {
             runs: 200,
           },
         }
+      },
+      "contracts/unix/UniXHelper.sol":{
+        version: "0.8.24",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        }
       }
     }
   },

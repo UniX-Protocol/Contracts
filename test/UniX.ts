@@ -1,4 +1,5 @@
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers"
+import { ethers } from "ethers"
 import {ethers as hethers} from "hardhat"
 
 const contractAddress = {
@@ -32,6 +33,10 @@ describe("Unix test",()=>{
 		const UniswapV2Router02 = await hethers.getContractFactory("UniswapV2Router02")
 		const uniswapV2Router = await UniswapV2Router02.deploy(uniswapFactory.getAddress(),weth.getAddress())
 
+		const unixHelperFactory = await hethers.getContractFactory("UniXHelper")
+		const uniXHelper = await unixHelperFactory.deploy()
+
+
 		const usdcWhale = await hethers.getImpersonatedSigner("0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503")
 		const wbtcWhale = await hethers.getImpersonatedSigner("0x6daB3bCbFb336b29d06B9C793AEF7eaA57888922") 
 		const ub = await hethers.provider.getBalance("0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503")
@@ -52,12 +57,13 @@ describe("Unix test",()=>{
 			uniswapFactory,
 			weth,
 			uniswapV2Router,
-			aaveV3Pool
+			aaveV3Pool,
+			uniXHelper
 		}
 	}
 
 	async function addLiquidityFixture() {
-		const {uniswapV2Router,owner,unixBank,uniswapFactory} = await loadFixture(deployContractFixture)	
+		const {uniswapV2Router,owner,unixBank,uniswapFactory,uniXHelper} = await loadFixture(deployContractFixture)	
 		let tokenA = contractAddress.USDC
 		let tokenB = contractAddress.WBTC
 		let amountAIgnoreDecimals = "7000"
@@ -92,13 +98,14 @@ describe("Unix test",()=>{
 			uniswapV2Router,
 			owner,
 			unixBank,
-			uniswapFactory
+			uniswapFactory,
+			uniXHelper
 		}
 
 	}
 
 	async function addLiquidityETHFixture() {
-		const {owner,uniswapV2Router,unixBank,weth} = await deployContractFixture()
+		const {owner,uniswapV2Router,unixBank,weth,uniXHelper} = await deployContractFixture()
 		const token = await hethers.getContractAt("AllocateErc20",contractAddress.USDC)
 		const decimals = (await token.decimals()).toString()
 		const amountTokenDesired = numberString(`40000e${decimals}`)
@@ -114,7 +121,8 @@ describe("Unix test",()=>{
 			unixBank,
 			token,
 			decimals,
-			weth
+			weth,
+			uniXHelper
 		}
 	}
 
@@ -207,12 +215,23 @@ describe("Unix test",()=>{
 			const {uniswapV2Router,owner,uniswapFactory,unixBank} = await loadFixture(addLiquidityFixture)
 			await time.increase(86400)
 			await unixBank.claimReward(owner,contractAddress.USDC)
-			await unixBank.claimInterest(contractAddress.USDC)
+			await unixBank.claimInterest(owner,contractAddress.USDC)
 
 			await unixBank.claimReward(owner,contractAddress.WBTC)
-			await unixBank.claimInterest(contractAddress.WBTC)
+			await unixBank.claimInterest(owner,contractAddress.WBTC)
+		})
+
+		it("getUserAvailableInterest",async ()=>{
+			const {uniswapV2Router,owner,uniswapFactory,unixBank,uniXHelper} = await loadFixture(addLiquidityFixture)
+			await time.increase(86400)
+			const interest = await uniXHelper.getUserInterest.staticCall(owner,contractAddress.USDC,unixBank)
+
+			console.log("interest",interest)
+			
+
 		})
 	})
+
 })
 
 function deadline() {

@@ -306,6 +306,7 @@ contract UniXBank {
 		interest = _getInterest(token);
 	}
 
+
 	function _claimedInterest(address token,address user) internal {
 		uint interest = _getInterest(token);
 		_updateShare(user, token, 0);
@@ -328,8 +329,8 @@ contract UniXBank {
 		}
 	}
 
-	function claimInterest(address token) external {
-		_claimedInterest(token,msg.sender);
+	function claimInterest(address user,address token ) external {
+		_claimedInterest(token,user);
 	}
 
 }
