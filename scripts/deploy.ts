@@ -52,7 +52,7 @@ import fs from "fs"
 		UniswapV2Router
 	}
 	
-	fs.writeFileSync("contract_address.json",JSON.stringify(contractAddress,null,4),{flag: 'w'})
+	fs.writeFileSync("contract_address.json",JSON.stringify(result,null,4),{flag: 'w'})
 
 
 })()
