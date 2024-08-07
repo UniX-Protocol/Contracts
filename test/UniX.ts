@@ -5,6 +5,8 @@ import {ethers as hethers} from "hardhat"
 const contractAddress = {
 	USDC:"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
 	WBTC:"0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+	RewardController:"0x8164Cc65827dcFe994AB23944CBC90e0aa80bFcb",
+	AaveV3Pool:"0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2"
 }
 
 describe("Unix test",()=>{
@@ -228,7 +230,16 @@ describe("Unix test",()=>{
 
 			console.log("interest",interest)
 			
+		})
 
+
+		it("getUserAvailableRewards",async ()=>{
+			const {uniswapV2Router,owner,uniswapFactory,unixBank,uniXHelper} = await loadFixture(addLiquidityFixture)
+			await time.increase(86400)
+			const res = await uniXHelper.getUserRewards.staticCall(owner,contractAddress.USDC,contractAddress.RewardController,contractAddress.AaveV3Pool,unixBank)
+
+			console.log("res",res)
+			
 		})
 	})
 
